@@ -6,10 +6,7 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import { db } from "../firebaseConfig";
 import {
@@ -20,19 +17,33 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import moment from "moment";
+import { useNavigation } from "@react-navigation/native";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ChatroomScreen({ route }) {
   const { username } = route.params;
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const flatListRef = useRef();
+  const navigation = useNavigation();
 
   useEffect(() => {
     const messagesRef = collection(db, "messages");
     const q = query(messagesRef, orderBy("timestamp", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map((doc) => doc.data()));
+      setMessages(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp?.toDate(),
+        }))
+      );
     });
 
     return () => unsubscribe();
@@ -57,112 +68,161 @@ export default function ChatroomScreen({ route }) {
 
   const isSender = (msgUsername) => msgUsername === username;
 
-  return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={styles.messageList}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.messageBubble,
-                isSender(item.username)
-                  ? styles.senderBubble
-                  : styles.receiverBubble,
-                isSender(item.username) ? styles.alignRight : styles.alignLeft,
-              ]}
-            >
-              {!isSender(item.username) && (
-                <Text style={styles.username}>{item.username}</Text>
-              )}
-              <Text style={styles.message}>{item.message}</Text>
-            </View>
+  const renderMessageItem = ({ item, index }) => {
+    const showDateHeader =
+      index === 0 ||
+      moment(item.timestamp).format("LL") !==
+        moment(messages[index - 1]?.timestamp).format("LL");
+
+    return (
+      <>
+        {showDateHeader && (
+          <View style={styles.dateHeader}>
+            <Text style={styles.dateText}>
+              {moment(item.timestamp).format("LL")}
+            </Text>
+          </View>
+        )}
+        <View
+          style={[
+            styles.messageBubble,
+            isSender(item.username)
+              ? styles.senderBubble
+              : styles.receiverBubble,
+            isSender(item.username) ? styles.alignRight : styles.alignLeft,
+          ]}
+        >
+          {!isSender(item.username) && (
+            <Text style={styles.username}>{item.username}</Text>
           )}
-        />
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type a message..."
-            placeholderTextColor="#aaa"
-            value={message}
-            onChangeText={setMessage}
-          />
-          <Pressable style={styles.sendButton} onPress={sendMessage}>
-            <Feather name="send" size={20} color="white" />
-          </Pressable>
+          <View style={styles.messageContent}>
+            <Text style={styles.message} numberOfLines={0}>
+              {item.message}
+            </Text>
+            <Text style={styles.time}>
+              {item.timestamp ? moment(item.timestamp).format("h:mm A") : ""}
+            </Text>
+          </View>
         </View>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+      </>
+    );
+  };
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("username");
+      navigation.navigate("Login");
+    } catch (error) {
+      console.log("Error clearing username:", error);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerStyle}>
+        <Text style={styles.headerTitleStyle}>Chatroom</Text>
+        <Pressable onPress={() => handleLogout()}>
+          <MaterialIcons name="logout" size={wp("6%")} color="black" />
+        </Pressable>
+      </View>
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={renderMessageItem}
+        contentContainerStyle={styles.messageList}
+      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Type a message..."
+          placeholderTextColor="gray"
+          value={message}
+          onChangeText={setMessage}
+        />
+        <Pressable style={styles.sendButton} onPress={sendMessage}>
+          <Feather name="send" size={wp("5%")} color="white" />
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9F9F9" },
-  messageList: { padding: 10 },
-  messageBubble: {
-    padding: 10,
+  container: { flex: 1, backgroundColor: "#f0f0f0" },
+  headerStyle: {
+    backgroundColor: "#a8c5e6",
+    height: hp("12%"),
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: wp("3%"),
+    paddingTop: wp("10%"),
+  },
+  headerTitleStyle: {
+    fontWeight: "bold",
+    fontSize: wp("6%"),
+  },
+  messageList: { paddingVertical: hp("1%"), paddingHorizontal: wp("3%") },
+  dateHeader: {
+    alignSelf: "center",
+    backgroundColor: "#e0e0e0",
     borderRadius: 10,
-    marginBottom: 10,
+    paddingHorizontal: wp("3%"),
+    paddingVertical: hp("0.5%"),
+    marginVertical: hp("1%"),
+  },
+  dateText: { color: "#555", fontSize: wp("3%") },
+  messageBubble: {
+    paddingHorizontal: wp("3%"),
+    paddingVertical: hp("1%"),
+    borderRadius: 15,
+    marginVertical: hp("0.5%"),
     maxWidth: "80%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 2,
   },
   senderBubble: {
-    marginRight: 5,
-    backgroundColor: "#D1FAD7",
-  },
-  receiverBubble: {
-    marginLeft: 5,
-    backgroundColor: "#E1F5FE",
-  },
-  alignRight: {
+    backgroundColor: "#DCF8C6",
     alignSelf: "flex-end",
   },
-  alignLeft: {
+  receiverBubble: {
+    backgroundColor: "#FFF",
     alignSelf: "flex-start",
   },
+  alignRight: { alignSelf: "flex-end" },
+  alignLeft: { alignSelf: "flex-start" },
   username: {
-    fontWeight: "bold",
-    color: "#007AFF",
-    marginBottom: 3,
+    fontSize: wp("3.5%"),
+    color: "#075E54",
+    marginBottom: hp("0.5%"),
   },
-  message: { fontSize: 16, color: "#333" },
+  message: { fontSize: wp("4%"), color: "#000" },
+  time: {
+    fontSize: wp("3%"),
+    color: "#555",
+    alignSelf: "flex-end",
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
-    padding: 5,
+    backgroundColor: "#FFF",
+    paddingVertical: hp("1%"),
+    paddingHorizontal: wp("3%"),
     borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5,
+    borderColor: "#DDD",
   },
   input: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: hp("1%"),
+    paddingHorizontal: wp("4%"),
     backgroundColor: "#F2F2F2",
     borderRadius: 25,
-    fontSize: 16,
-    marginRight: 10,
+    fontSize: wp("4%"),
+    marginRight: wp("2%"),
     color: "#333",
   },
   sendButton: {
     backgroundColor: "#007AFF",
     borderRadius: 25,
-    padding: 10,
+    padding: wp("3%"),
     alignItems: "center",
     justifyContent: "center",
     elevation: 3,

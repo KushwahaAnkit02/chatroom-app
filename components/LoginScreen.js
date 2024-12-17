@@ -7,13 +7,13 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
 
-  // Retrieve username when the app opens
   useEffect(() => {
     const loadUsername = async () => {
       try {
@@ -30,8 +30,10 @@ export default function LoginScreen({ navigation }) {
     loadUsername();
   }, []);
 
-  // Save username locally and navigate to the Chatroom
   const handleLogin = async () => {
+    if (username.length == 0) {
+      Alert.alert("warning!", "Please enter your username");
+    }
     if (username.trim()) {
       try {
         await AsyncStorage.setItem("username", username);
