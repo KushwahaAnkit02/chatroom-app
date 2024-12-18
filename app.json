@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anky-kushwaha.chatroomapp"
     },
     "android": {
       "adaptiveIcon": {
