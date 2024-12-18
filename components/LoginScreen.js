@@ -56,7 +56,7 @@ export default function LoginScreen({ navigation }) {
           placeholder="Enter your username"
           placeholderTextColor="#aaa"
           value={username}
-          onChangeText={setUsername}
+          onChangeText={(text) => setUsername(text.replace(/\s+/g, ' '))}
         />
         <Pressable style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Join Chatroom</Text>
