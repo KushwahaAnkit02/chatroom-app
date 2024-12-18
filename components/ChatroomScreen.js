@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  BackHandler,
 } from "react-native";
 import { db } from "../firebaseConfig";
 import {
@@ -107,14 +108,61 @@ export default function ChatroomScreen({ route }) {
       </>
     );
   };
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem("username");
-      navigation.navigate("Login");
-    } catch (error) {
-      console.log("Error clearing username:", error);
-    }
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Confirm Logout", // Title
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("username");
+              navigation.navigate("Login");
+            } catch (error) {
+              console.log("Error clearing username:", error);
+            }
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: true }
+    );
   };
+
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert(
+        "Exit App",
+        "Are you sure you want to exit the app?",
+        [
+          {
+            text: "Cancel",
+            onPress: () => null,
+            style: "cancel",
+          },
+          {
+            text: "Exit",
+            onPress: () => BackHandler.exitApp(),
+          },
+        ],
+        { cancelable: true }
+      );
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup on unmount
+  }, []);
 
   return (
     <View style={styles.container}>
