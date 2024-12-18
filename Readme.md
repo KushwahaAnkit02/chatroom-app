@@ -24,7 +24,7 @@ This is a React Native application that allows users to join a chatroom and send
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/KushwahaAnkit02/chatroom-app.git
    cd chatroom-app
    ```
 
