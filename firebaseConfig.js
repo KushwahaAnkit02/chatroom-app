@@ -1,20 +1,14 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-// Your web app's Firebase configuration
-
 const firebaseConfig = {
-  apiKey: "AIzaSyBYKF0DjnQ5W1x0k6Pn_Otg6KJPS7ljpdE",
-  authDomain: "chatroom-65b43.firebaseapp.com",
-  projectId: "chatroom-65b43",
-  storageBucket: "chatroom-65b43.firebasestorage.app",
-  messagingSenderId: "261657107438",
-  appId: "1:261657107438:web:70a2156c97705ecad20cff",
+  apiKey: "AIzaSyBf4Bv7QZAleu-2hb6IQC7qkApuirXza4Q",
+  authDomain: "chatroom-456a6.firebaseapp.com",
+  databaseURL: "https://chatroom-456a6-default-rtdb.firebaseio.com",
+  projectId: "chatroom-456a6",
+  storageBucket: "chatroom-456a6.firebasestorage.app",
+  messagingSenderId: "309895553949",
+  appId: "1:309895553949:web:3a5b22b65a9c6acb54c574",
 };
-
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore();

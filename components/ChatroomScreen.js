@@ -35,7 +35,7 @@ export default function ChatroomScreen({ route }) {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const messagesRef = collection(db, "messages");
+    const messagesRef = collection(db, "newMessage");
     const q = query(messagesRef, orderBy("timestamp", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(
@@ -58,7 +58,7 @@ export default function ChatroomScreen({ route }) {
 
   const sendMessage = () => {
     if (message.trim()) {
-      addDoc(collection(db, "messages"), {
+      addDoc(collection(db, "newMessage"), {
         username,
         message,
         timestamp: serverTimestamp(),
